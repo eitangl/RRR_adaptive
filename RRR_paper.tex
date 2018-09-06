@@ -1,0 +1,381 @@
+\documentclass[12pt]{article}
+
+\usepackage{tensor} %prescript
+\usepackage{amsmath} %lots of math symbols
+\usepackage{amsfonts} %\mathbb
+\usepackage{microtype} %improves font to make it easier to read
+\usepackage{hyperref} %clickable links
+\usepackage[capitalize]{cleveref} %cref
+\usepackage{amsthm} %proof environment
+\usepackage[shortlabels]{enumitem} %resume enumerate
+\usepackage{amssymb} %\subsetneq(q)
+\usepackage{comment}
+\usepackage{mathrsfs}
+\usepackage{gensymb}
+\usepackage{bbm} %mathbbm
+\usepackage{algorithm,algpseudocode} %for algorithms
+\usepackage{tikz} % node
+\usepackage{subfigure}
+\usepackage{titlesec} % titleformat
+
+\algrenewcomment[1]{\quad\(\triangleright\) #1}
+\algnewcommand\algorithmicinput{\textbf{Input:}}
+\algnewcommand\INPUT{\item[\algorithmicinput]}
+\algnewcommand\algorithmicoutput{\textbf{Output:}}
+\algnewcommand\OUTPUT{\item[\algorithmicoutput]}
+\algnewcommand{\LineComment}[1]{\State \(\triangleright\) #1}
+
+\titleformat*{\section}{\large\bfseries}
+\titleformat*{\subsection}{\normalsize\bfseries}
+\titlespacing*{\section}
+{0pt}{1ex}{1ex}
+\titlespacing*{\subsection}
+{0pt}{1ex}{1ex}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\theoremstyle{definition}
+\newtheorem{exer}{Ex.}
+
+\theoremstyle{problem}
+\newtheorem{problem}{Problem}
+
+\theoremstyle{definition}
+\newtheorem{probl}{Problem}
+\newenvironment{customprb}[1]
+  {\renewcommand\theprobl{#1}\probl}
+  {\endprobl}
+\newtheorem{prob}{Problem}
+
+\newtheorem{proposition}{Proposition}
+\setenumerate[1]{label={(\roman*)}}
+
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\bthm}{\begin{theorem}}
+\newcommand{\inv}[1]{#1^{-1}}
+\newcommand{\ethm}{\end{theorem}}
+\newcommand{\blem}{\begin{lemma}}
+\newcommand{\elem}{\end{lemma}}
+\newcommand{\bpof}{\begin{proof}}
+\newcommand{\epof}{\end{proof}}
+\newcommand{\bcor}{\begin{corollary}}
+\newcommand{\ecor}{\end{corollary}}
+\newcommand{\bdefn}{\begin{definition}}
+\newcommand{\edefn}{\end{definition}}
+\newcommand{\brem}{\begin{remark}}
+\newcommand{\erem}{\end{remark}}
+\newcommand{\bprobtxt}{\begin{problem}}
+\newcommand{\eprobtxt}{\end{problem}}
+\newcommand{\bprob}{\begin{customprb}}
+\newcommand{\eprob}{\end{customprb}}
+\newcommand{\bex}{\begin{exer}}
+\newcommand{\eex}{\end{exer}}
+\newcommand{\bprop}{\begin{proposition}}
+\newcommand{\eprop}{\end{proposition}}
+\newcommand{\vf}[1]{\mathbf{#1}}
+\newcommand{\bs}[1]{\boldsymbol{#1}}
+\newcommand{\rank}{\text{rank}}
+\renewcommand{\span}{\text{span}}
+\newcommand{\inter}{\text{int}}
+\newcommand{\clo}{\text{clo}}
+\newcommand{\Tr}{\text{Tr}}
+\newcommand{\sgn}{\text{sign}}
+\newcommand{\conj}[1]{\overline{#1}}
+\newcommand{\aut}{\text{aut}}
+\newcommand{\orb}{\text{orbit}}
+\newcommand{\stab}{\text{Stab}}
+\newcommand{\defeq}{\mathrel{\overset{\makebox[0pt]{\mbox{\normalfont\tiny\sffamily def}}}{=}}}
+\newcommand{\Gal}{\text{Gal}}
+\newcommand{\lcm}{\text{lcm}}
+\newcommand{\id}{\text{id}}
+\newcommand{\diag}{\text{diag}}
+\newcommand{\col}{\text{col}}
+\newcommand{\sign}{\text{sign}}
+\newcommand{\phase}{\text{phase}}
+\newcommand{\atan}{\tan^{-1}}
+
+\renewcommand{\baselinestretch}{1.1} %-------------------That's the stretching command!--------------------------
+%\overfullrule=5pt %------------------------------------This highlights overfull boxes!-------------------------
+
+\newcommand{\RR}{\mathbb{R} }
+\newcommand{\ZZ}{\mathbb{Z} }
+\newcommand{\QQ}{\mathbb{Q} }
+\newcommand{\NN}{\mathbb{N} }
+\newcommand{\II}{\mathcal{I} }
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\MM}{\mathcal{M}}
+\newcommand{\FF}{\mathbb{F}}
+\newcommand{\rsum}{\sideset{}{'}\sum}
+\newcommand{\ch}{\text{ch}}
+\newcommand{\ord}{\text{ord}_p}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\EE}{\mathbb{E}}
+\newcommand{\prox}{\text{prox}}
+%\newcommand{\gcd}{\text{gcd}}
+
+\newcommand{\TODO}[1]{{\color{red}{[#1]}}}
+
+\title{Adaptive learning rate for phase retrieval algorithms}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+Phase retreival, the problem of recovering the phases of the Fourier transform of a signal given its magnitudes, is an important problem in XYZ. While almost all multidimensional signals are uniquely determined from their oversampled Fourier transform [Beinert], existing algorithms for recovery are poorly understood. In practice however, many heuristic algorithms exist that are use in the crystallography community, including HIO, RRR, and RAAR. These enjoy good empirical performance, recovering the correct solution every time, but no theoretical guarantees are known for them. For certain choices of their parameters, all three of the above algorithms coincide with with the Douglas-Rachford algorithm, although the theoretical guarantees associated with Douglas-Rachford do not apply to this problem because of its non-convexity. 
+
+In this paper, we focus on a particular heuristic algorithm called Relaxed-Reflect-Reflect (RRR) [Elser]. We formulate the algorithm as subgradient descent in a specific setting, and use backtracking line search to adaptively choose the step size, which coincides with the free 'relaxation' parameter introduced in [Elser]. Numerical experiments show that our algorithm can significantly reduce the iteration complexity and time for recovery. Furthermore, while it was previously reported that RRR has an exponential distribution of running time, our algorithm does not.
+
+Because of the difficulty of the Fourier phase retrieval problem, a simplified version has been extensively studied in the optimization literature, often referred to as generalized phase retrieval. In this setting, the Fourier matrix is replaced by a random Gaussian matrix. Several algorithms have been proposed for this problem that enjoy global convergence guarantees. Unfortunately, these algorithms are unable to retrieve Fourier phases. We apply our algorithm to the generalized phase retrieval problems as well and demonstrate a consistent advantage.
+
+\section{Problem Statement and Previous Algorithms}
+We formulate phase retrieval as a feasibility problem: Given a sensing matrix $A\in\CC^{m\times n}$ and magnitudes $b\in\RR^{m}_{\geq 0}$, we require a point $x\in\MM\cap \col(A)$ where $\MM=\{x\in\CC^n:\ |x|=b\}$ and $|x|$ denotes entry-wise absolute value. The sensing matrix is usually taken to be either i.i.d. Gaussian or an oversampled DFT matrix \cite{Bendory2017}, the latter being especially relevant for applications in optics and crystallography \cite{Elser2017, Luke2005}. The intersection $\MM\cap\col(A)$ is never singleton, since if $z^*\in\col(A)\cap\MM$ then $e^{i\theta}z^*\in\col(A)\cap \MM$ for any global phase $\theta$. It has been shown however that $\col(A)\cap\MM$ is singleton modulo global phase in various settings \cite{Bandeira2014,Bendory2017,Conca2015}. \TODO{Expand on this?}
+
+The naive approach to this problem, called Grechberg-Saxton (GS) or Error Reduction (ER) in the literature, consists of alternate projection between the two constraint set until convergence. Specifically, we introduce the projectors 
+\begin{equation}\label{eq:projections}
+    P_A(x) = AA^{\dagger}x, \quad P_{\MM}(x)=b\odot \phase(x),
+\end{equation}
+where $P_A$ projects onto $\col(A)$, $P_{\MM}$ projections onto $\MM$ and $\phase(x)_i=\frac{x_i}{|x_i|}$. Then, GS performs the iteration 
+\begin{equation}\label{eq:GS}
+    x\mapsto P_AP_{\MM}(x),    
+\end{equation}
+which are unfortunately known to quickly converge to suboptimal local minima, and in practice only used to refine a solution \cite{Elser2017, Marchesini2007}. 
+
+Instead, many algorithms used in practice are based on relaxing the Douglas-Rachford algorithm applied to the sum of characteristic functions $F(x) = \II_{A}(x)+\II_{\MM}(x)$. Specifically, Douglas-Rachford for $F(x)$ iterates \begin{equation}\label{eq:Doug_Rach}
+    x\mapsto \frac{1}{2}(I+R_AR_{\MM})(x) = x + 2P_AP_{\MM}(x) - P_A(x) - P_{\MM}(x) = P_AP_{\MM}(x) + P_A^cP_{\MM}^c(x),
+\end{equation} 
+where $R_A = 2P_A-I$, $P_A^c=I-P_A$ and similarly for $R_{\MM}$ and $P_{\MM}^c$, and we used the fact that $P_A$ is linear. Many algorithms proceed to relax this iteration by introducing different free parameters\TODO{Rewrite in terms of reflections?}:
+
+\begin{itemize}
+    \item Fienup's Hybrid Input-Output (HIO) algorithm proceeds by iterating 
+    \begin{equation}\label{eq:HIO}
+        x\mapsto P_AP_{\MM}(x) + P_A^c(I-\beta P_{\MM})(x),
+    \end{equation} 
+    where $P_A^c$ is the projection onto the complement of the support and $\beta$ is a parameter controlling the ``negative feedback'',
+    \item The Relaxed-Reflect-Reflect (RRR) algorithm iterates
+    \begin{equation}\label{eq:RRR}
+        x\mapsto x + \beta\left[2P_AP_{\MM}(x)-P_A(x)-P_{\MM}(x)\right],
+    \end{equation},
+    \item The Relaxed Averaged Alternating Reflections (RAAR) algorithm iterates
+    \begin{equation}\label{eq:RAAR}
+        x\mapsto \beta\left[z + 2P_AP_{\MM}(z)-P_A(z)-P_{\MM}(z)\right] + (1-\beta)P_{\MM}(z).
+    \end{equation}
+\end{itemize}
+These algorithms apply more generally to problems involving finding a point in the intersection of two sets, as demonstrated in \TODO{Veit, PNAS} for the RRR algorithm \TODO{Actually, "difference map"}.
+
+In addition to the above algorithms that are based on relaxing Douglas-Rachford, several algorithms have been developed for the simpler randomized phase retrieval problem. These include Wirtinger Flow and Truncated Wirtinger Flow which are based on gradient descent, and PhaseLift based on semidefinite relaxation. While effective for solving the randomized phase retrieval problem, these algorithms fail in the Fourier phase retrieval problem. Furthermore, even for randomized phase retrieval, they are outperformed by the RRR algorithm, as demonstrated in \TODO{benchmarks} and in Sect.~TKTK. 
+
+\section{The Adaptive Scheme}
+In this section, we present our scheme for adaptively choosing the relaxation parameter $\beta$ for RRR in Eq.~\ref{eq:RRR} at each iteration. To this end, we first consider the simpler ``sign retrieval'' problem, in which both the signal and sensing matrix are real-valued and we only need to retrieve a binary sign for each entry of the observation. For this problem, introduce the function 
+\begin{equation}\label{eq:RRR_func}
+    f(z) = ||z - P_AP_{\MM}(z)||_2^2 - \frac{1}{2}\Big(||z-P_A(z)||_2^2 + ||z-P_{\MM}(z)||_2^2\Big),
+\end{equation}
+for which the RRR iterations become subgradient descent $z\mapsto z-\beta\nabla f(z)$, where
+\begin{equation}\label{eq:RRR_func_grad}
+    \nabla f(z) = P_A(z) + P_{\MM}(z) - 2P_AP_{\MM}(z),
+\end{equation}
+is a subgradient (and in fact, gradient if $z_i\neq 0$ for any $i=1,\ldots, m$). Since the RRR relaxation parameter $\beta$ becomes the step size in the subgradient direction in this regime, we can use backtracking line search to choose $\beta$ adaptively at each iteration. Unfortunately, in the complex case it can be shown that the RRR (and HIO) iterations are not gradients (see Appendix~\ref{sec:complex_not_grads}), but nonetheless we observe that our cost $f(z)$ is still useful - see Sect. 3.
+
+Instead of applying backtracking line search to choose $\beta$ to achieve a decrease in $f(z)$ as is standard, we choose $\beta$ to decrease $|f(z)|$, since at the global minimum $f(z)=0$, while $f(z)$ can become negative in many points, in particular all the suboptimal fixed points of GS for which $z = P_AP_{\MM}(z)$. We also set a lower bound on the chosen step size, because from our experience there are points at which no significant decrease in the function value can be achieved, and in this case taking a relatively large step size is beneficial. The algorithm we use to choose $\beta$ is described in Alg.~\ref{alg:LS_for_RRR}. In our numerical experiments, we set $\delta = 0.25$, $\beta = 0.85$ and $\alpha=0.05$.
+
+\begin{algorithm}
+\caption{Line Search for RRR}\label{alg:LS_for_RRR}
+\begin{algorithmic}
+\INPUT{$\alpha,\eta,\delta$}
+\OUTPUT{$\beta$}
+\State $\beta\gets 1$ \Comment{Initialization}
+\While{$|f(z-\beta\nabla f(z))| > |f(z)| - \alpha\eta||\nabla f(z)||_2^2$ and $\beta > \delta$}
+    \State $\beta\gets \eta\beta$
+\EndWhile
+\If{$\beta \leq \delta$} \Comment{Ensure sufficiently large step size}
+    \State $\beta \gets 1$
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+
+\section{Numerical Results}
+\TODO{Address noise}
+
+We present experiments on both the artificial real-valued random phase-retrieval problem and the more applicable but difficult Fourier phase retrieval. We compare our adaptive RRR scheme both with RRR with constant step size, with HIO, and with RAAR. For the random phase-retrieval problem, we also compare our scheme with the gradient-descent based Wirtinger Flow and Truncated Wirtinger Flow algorithms, as well as the SDP-based PhaseLift.
+
+\section{Basic analysis}
+We show several basic results about $f(z)$ (because of space limitations, all proofs are given in the appendix).
+
+We first characterize the fixed points of RRR and their relations to the solution of the original feasibility:
+\bdefn\label{defn:soln} A point $z\in\CC^m$ is said to \emph{correspond to a solution} if $P_A(z) = P_{\MM}(z)$. \edefn
+
+\blem\label{lem:any_fixed_is_good} $z^*$ is a fixed point of RRR or HIO (and hence a critical point of $f(z)$ in the real case) if and only if $z^*$ corresponds to a solution. \elem
+\bpof See Appendix~\ref{sec:pf_any_fixed_good} \epof
+
+\blem\label{lem:solns_char} $z^*$ corresponds to a solution if and only if $z^* = y^* + w$ where $y^*\in\col(A)\cap \MM$ and $w\in\col(A)^{\perp}$ satisfies either $\text{phase}(w_i) = \text{phase}(y^*_i)$ or $\text{phase}(w_i) = -\text{phase}(y^*_i)$ and $|w_i|<|(Ax^*)_i|$ for all $1\leq i\leq m$. \elem
+\bpof  See Appendix~\ref{sec:pf_solns_char}. \epof
+
+We characterize the convergence of RRR to a fixed point from a point sufficiently close to it \TODO{in its basin of attraction?}:
+\bthm\emph{(\cite[Thm. 3]{Li2017a})}\label{lem:lin_conver} Suppose $A\in\CC^{m\times n}$ with $m/n\geq 2$ is isometric, and $\eta\in(0,1]$. Suppose $z^*\in\col(A)\cap\MM$. Then if $z$ is sufficiently close to $z^*$ (see reference for details), RRR converges linearly to $z^*$. \ethm
+
+In the real case, we can prove an even stronger result:
+\blem\label{lem:local_convex} Suppose $z^*\in\RR^m$ corresponds to a solution and $d = \min_i|z^*_i| > 0$. Then $f(z)$ is convex in the $\ell_2$ ball of radius $d$ about $z^*$, and 1-strongly convex when restricted to $\col(A)$. Furthermore, if $||z-z^*||_2<d$, and $\eta\in(0,2)$, then RRR converges to a fixed point linearly, and for $\eta=1$ after one iteration. \elem
+\bpof See Appendix~\ref{sec:pf_local_convex}. \epof
+
+As the above Lemma shows, every fixed point is a local minimum of $f(z)$ around which $f(z)$ is convex, making our formulation more stable than the saddle-point formulation in \cite{Marchesini2007}. Note however that these are not the global minima of $f(z)$, as $f(z)=0$ at any critical point, while $f(z)<0$ for any suboptimal fixed point of GS. Nevertheless, we can show that $f(z)$ cannot escape to $-\infty$ along many directions:
+
+\blem\label{lem:no_escape} In the real case, there exists large enough step size $\eta>0$ such that $f(z-\eta d) > 0$ for any $z\in\RR^m$, and any direction $d\in\RR^m$ such that $d_i\neq 0$ for all $i$ and either $P_A(d)\neq 0$ or $\langle d, P_{\MM}(z)\rangle > 0$. \elem
+\bpof See Appendix~\ref{sec:pf_no_escape}. \epof
+
+\bcor\label{cor:RRR_no_escape} For any $z\in\RR^m$ such that $\nabla f(z)_i\neq 0$ for any $i$ there exists a sufficiently large step size $\eta>0$ such that $f(z-\eta\nabla f(z)) > 0$. Similarly, if $z^+$ is the next HIO iteration and $z^+_i\neq z_i$ for any $i$, then either $P_{\MM}(z)\in\col(A)\cap\MM$ is a solution or there exists a large enough $\eta>0$ such that $f(z^+)>0$. \ecor
+\bpof See Appendix~\ref{sec:pf_RRR_no_escape}. \epof
+
+We also show that on average, the negative gradient direction is positively correlated with the vector from the current iterate to the nearest solution in $\col(A)\cap\MM$:
+\blem\label{lem:exp_inner_prod} In the real case, for any $z\in\RR^m$ let $s(z) = \sign\left(\langle z, Ax^*\rangle\right)$. Then both $E = \EE_{z\sim\mathcal{N}(0, I)}\left[\langle -\nabla f(z), s(z)Ax^*-z\rangle\right]$ depends only on $|Ax^*|$ so can be computed in practice, and after possibly renormalizing the problem, i.e. solving for $z^*\in\col(A)\cap\alpha\MM$ with $\alpha>0$, and letting the solution be $z^*/\alpha$, we have $E>0$. \elem
+\bpof See Appendix~\ref{sec:pf_exp_inner_prod}. \epof
+
+Finally, we show some stability for the RRR iterations, in the sense that if the gradient is sufficiently small than there is a solution nearby:
+\blem\label{lem:stable} In the real case, there exists a sufficiently small $\epsilon>0$ such that if $||\nabla f(z)||_2< \epsilon$ then $P_{\MM}(z)\in\col(A)\cap\MM$ is a solution. Furthermore, if $d=\min_i|(Ax^*)_i|>0$ then there exists a point $z^*\in\RR^m$ that corresponds to a solution such that $||z-z^*||_2<\epsilon\left(1 + \frac{||P_A^c(z)||_2}{d}\right)$. If in addition $\min_i|z_i|\geq\epsilon$ then $||z-z^*||_2< \epsilon$.\elem
+\bpof See Appendix~\ref{sec:pf_stable}. \epof
+
+\bibliographystyle{abbrv}
+\bibliography{RRR_refs}
+
+\appendix
+\section{Appendix - Proofs}
+
+\subsection{RRR and HIO are not gradients in the complex case}\label{sec:complex_not_grads}
+Suppose $z_i\neq 0$ for any $i$. Note that $P_A(z),P_{\MM}(z)$ are gradients, as shown in \cite{Marchesini2007}. However, $P_AP_{\MM}(z)$ is not a gradient, as can be seen by comparing mixed Wirtinger derivatives:
+\[\begin{aligned} \frac{\partial}{\partial \overline{z_k}}P_AP_{\MM}(z)_i &= -\frac{1}{2}(AA^{\dagger})_{i,k}|y_k|\frac{z_k}{|z_k|\overline{z_k}},\\
+\frac{\partial}{\partial \overline{z_i}}P_AP_{\MM}(z)_k &= -\frac{1}{2}(AA^{\dagger})_{k,i}|y_i|\frac{z_i}{|z_i|\overline{z_i}} = -\frac{1}{2}\overline{(AA^{\dagger})}_{i,k}|y_i|\frac{z_i}{|z_i|\overline{z_i}},\end{aligned}\]
+so $\frac{\partial}{\partial \overline{z_k}}P_AP_{\MM}(z)_i\neq \frac{\partial}{\partial \overline{z_i}}P_AP_{\MM}(z)_k$. 
+
+[In the real case, the derivative of the sign function is zero.]
+
+\subsection{Lemma~\ref{lem:any_fixed_is_good}}\label{sec:pf_any_fixed_good}
+The condition for a fixed point of RRR, or a critical point of $f(z)$ in the real case, is equivalent to
+\[ 2P_AP_{\MM}(z) - P_{\MM}(z) - P_A(z) = 0,\]
+which after applying $P_A$ and $I-P_A$ to both sides yields $P_A(z) = P_AP_{\MM}(z)$ and $P_{\MM}(z) = P_AP_{\MM}(z)$, respectively, so $P_A(z)=P_{\MM}(z)$ and $z$ corresponds to a solution. Conversely, if $z^*$ corresponds to a solution then $2P_AP_{\MM}(z) = P_{\MM}(z) + P_A(z)$ trivially.
+
+The proof for HIO is almost exactly the same.
+
+\subsection{Lemma~\ref{lem:solns_char}}\label{sec:pf_solns_char}
+If $z^* = y^*+w$ with $y^*,w$ as hypothesized then $P_A(z^*)=y^*$ and $P_{\MM}(z^*) = P_{\MM}(y^*)=y^*$ as either $\phase(y^*_i+w_i) = \phase((|(Ax^*)_i|+|w_i|)\phase(y^*_i))=\phase(y^*_i)$ or $\phase(y^*_i+w_i) = \phase((|(Ax^*)_i|-|w_i|)\phase(y^*_i))=\phase(y^*_i)$ so $\phase(z^*)=\phase(y^*)$, and hence $P_A(z^*)=P_{\MM}(z^*)$.
+
+Conversely, if $z^*$ corresponds to a solution, write $z^* = P_A(z^*) + P_A^c(z^*)$ and note that $P_{\MM}(z^*) = P_A(z^*) = P_{\MM}P_A(z^*)$ and hence $\phase(P_A(z^*)_i + P_A^c(z^*)_i) = \phase(P_A(z^*)_i)$, so either $\phase(P_A^c(z^*)_i)=\phase(P_A(z^*)_i)$ or $\phase(P_A^c(z^*)_i)=-\phase(P_A(z^*)_i)$ and $|P_A^c(z^*)_i|<|P_A(z^*)_i|$, as desired.
+
+\subsection{Lemma~\ref{lem:local_convex}}\label{sec:pf_local_convex}
+Note that if $\sign(z_j)\neq \sign(z^*_j)$ for any $j$, then
+\[ ||z-z^*||_2^2 = \sum_i|z_i-z^*_i|^2 \geq (|z_j| + |z^*_j|)^2 \geq |z^*_j|^2,\]
+so if $||z-z^*||_2<d$ we must have $\sign(z_i)=\sign(z^*_i)$ for all $i$ and hence $P_{\MM}(z)=P_{\MM}(z^*)=P_A(z^*)$. Hence in this $\ell_2$ ball we have
+\[ f(z) = \frac{1}{2}\left(||z-P_A(z^*)||_2^2 - ||(I-P_A)(z)||_2^2\right),\]
+so $f(z)$ is infinitely differentiable with $\nabla f(z) = P_A(z-z^*)$ and $\nabla^2 f(z) = AA^{\dagger}\succeq 0$, so $f(z)$ is convex. Furthermore, when restricted to $\col(A)$ all the eigenvalues of $AA^{\dagger}$ are 1 as it is a projection matrix onto $\col(A)$, so $f(z)|_{\col(A)}$ is 1-strongly convex.
+
+If $||z-z^*||_2<d$ and $\eta\in(0,2)$, then $z^+ = (1-\eta)P_A(z) + \eta P_A(z^*) + P_A^c(z)$ so
+\[\begin{aligned} ||z^+-z^*||_2^2 &= (1-\eta)^2||P_A(z-z^*)||_2^2 + ||P_A^c(z-z^*)||_2^2\\
+&< ||P_A(z-z^*)||_2^2 + ||P_A^c(z-z^*)||_2^2\\
+&= ||z-z^*||_2^2 < d.\end{aligned}\]
+This implies that if we initialize $z^0$ such that $||z^0-z^*||_2<d$, and use constant step size $\eta\in(0,2)$, then $z^t = (1-\eta)^tP_A(z^0-z^*) + P_A(z^*) + P_A^c(z^0)$ so $z_{\infty}=\lim_{t\to\infty}z^t = P_A(z^*) + P_A^c(z) = P_{\MM}(z^*) + P_A^c(z)$. Note that $z_{\infty}$ corresponds to a solution by Lemma~\ref{lem:any_fixed_is_good} and the fact that $\nabla f(z_{\infty}) = 0$. Also note that if $\eta = 1$, RRR converges to $z_{\infty}$ in one iteration.
+
+\subsection{Lemma~\ref{lem:no_escape}}\label{sec:pf_no_escape}
+For $\eta>\max_i|z_i/d_i|$, we have $P_{\MM}(z-\eta d) = P_{\MM}(-\eta d) = -P_{\MM}(d)$. Then
+\[\begin{aligned} &||(z-\eta z) - P_AP_{\MM}(z-\eta z)||_2^2 = ||z-\eta d + P_AP_{\MM}(d)||_2^2\\
+&= \eta^2||d||_2^2 + ||z + P_AP_{\MM}(d)||_2^2 - 2\eta\langle d, z + P_AP_{\MM}(d)\rangle,\end{aligned}\]
+where the second term is a constant with respect to $\eta$. Similarly, since $P_A$ is linear,
+\[\begin{aligned} &||(z-\eta d) - P_A(z-\eta d)||_2^2 = ||z-\eta d - P_A(z) + \eta P_A(d)||_2^2\\
+&= \eta^2||(I-AA^{\dagger})d||_2^2 + ||z-P_A(z)||_2^2 - 2\eta \langle d, z-P_A(z)\rangle,\end{aligned}\]
+and
+\[\begin{aligned} &||z-\eta d - P_{\MM}(z-\eta d)||_2^2 = ||z-\eta d + P_{\MM}(d)||_2^2\\
+&= \eta^2||d||_2^2 + ||z+P_{\MM}(d)||_2^2 - 2\eta\langle d, z+P_{\MM}(d)\rangle,\end{aligned}\]
+so putting everything together:
+\[ f(z-\eta d) = \frac{1}{2}\eta^2 ||P_A(d)||_2^2 - \eta\langle d, P_A(z + 2P_{\MM}(d)) - P_{\MM}(z)\rangle + c,\]
+where $c = ||z + P_AP_{\MM}(d)||_2^2 - \frac{1}{2}\left(||z-P_A(z)||_2^2 + ||z+P_{\MM}(d)||_2^2\right)$ is independent of $\eta$.
+
+If $P_A(d)\neq 0$ then $\lim_{\eta\to\infty}f(z-\eta d)=\infty$. If $P_A(d) = 0$ then $f(z-\eta d) = \eta\langle d, P_{\MM}(z)\rangle + c$, so if $\langle d,P_{\MM}(z)\rangle > 0$ we again have $\lim_{\eta\to\infty}f(z-\eta d)=\infty$.
+
+\subsection{Corollary~\ref{cor:RRR_no_escape}}\label{sec:pf_RRR_no_escape}
+For RRR, we have $d=\nabla f(z) = P_A(z) + P_{\MM}(z) - 2P_AP_{\MM}(z)$, then $P_A(d) = P_A(z) - P_AP_{\MM}(z)$, so $P_A(d) = 0$ implies $\nabla f(z) = P_A^cP_{\MM}(z)$ and hence $\langle \nabla f(z), P_{\MM}(z)\rangle = ||P_A^cP_{\MM}(z)||_2^2 \geq 0$. If $\langle \nabla f(z), P_{\MM}(z)\rangle = 0$ then $P_{\MM}(z) = P_AP_{\MM}(z) = P_A(z)$, so in fact $\nabla f(z) = 0$ and $z\in\col(A)\cap\MM$ is a solution.
+
+For HIO, let $z\mapsto z + P_A(P_{\MM}(z)-z)$ and $d\mapsto P_A^cP_{\MM}(z)$ in Lemma~\ref{lem:no_escape}, and note that $P_A(d)=0$ and $\langle d,P_{\MM}(z)\rangle = ||P_A^cP_{\MM}(z)||_2^2 = 0$ if and only if $P_{\MM}(z)=P_AP_{\MM}(z)\in\col(A)$, so $P_{\MM}(z)\in\col(A)\cap\MM$.
+
+\subsection{Lemma~\ref{lem:exp_inner_prod}}\label{sec:pf_exp_inner_prod}
+Since $\nabla f(z) = P_A(z) + P_{\MM}(z) - 2P_AP_{\MM}(z)$, we have
+\[\begin{aligned} &\langle -\nabla f(z), s(z)Ax^* - z\rangle = \langle P_A(P_{\MM}(z)-z) - (I-P_A)P_{\MM}(z), s(z)Ax^*-z\rangle
+\\ &= \langle P_{\MM}(z), s(z)Ax^*\rangle - |\langle z, Ax^*\rangle| -2\langle P_{\MM}(z), P_A(z)\rangle + \langle P_{\MM}(z), z\rangle + \langle z, P_A(z)\rangle. \end{aligned}\]
+We now proceed term by term. First,
+\[ \EE_{z\sim \mathcal{N}(0,\sigma^2I)}\left[\langle P_{\MM}(z), s(z)Ax^*\rangle\right] = \sum_{i=1}^m(Ax^*)_i|(Ax^*)_i|\EE[\sign(z_i)\sign(\langle z,Ax^*\rangle)],\]
+and
+\[\begin{aligned}&\EE[\sign(z_i)\sign(\langle z,Ax^*\rangle)]\\
+&= \PP(\langle z,Ax^*\rangle > 0,\ z_i>0) + \PP(\langle z,Ax^*\rangle < 0,\ z_i<0)\\
+&\quad - \PP(\langle z,Ax^*\rangle > 0,\ z_i<0) - \PP(\langle z,Ax^*\rangle < 0,\ z_i>0).\end{aligned}\]
+Writing $\langle z,Ax^*\rangle = \sum_j(Ax^*)_jz_j = y_i + (Ax^*)_iz_i$ where $y_i = \sum_{j\neq i}(Ax^*)_jz_j$ is independent of $z_i$, and noting that $y_i\sim \mathcal{N}(0, ||y^{(i)}||_2^2)$ where $y^{(i)}\in\RR^{m-1}$ is obtained from $Ax^*$ by deleting the $i$th entry, we have
+\[\begin{aligned} &\PP((Ax^*)_iz_i + y_i < 0,\ z_i < 0) = \PP((Ax^*)_iz_i + y_i > 0,\ z_i > 0)\\
+&= \frac{1}{2\pi\sigma||y^{(i)}||_2}\int_0^{\infty}\int_{-(Ax^*)_iz_i}^{\infty}e^{-z_i^2/2\sigma^2}e^{-y_i^2/2||y^{(i)}||_2^2}\, dy_i\, dz_i\\
+&= \frac{1}{4} + \frac{1}{2\pi}\atan(\sigma(Ax^*)_i/||y^{(i)}||_2) = \frac{1}{4} + \frac{\sign(Ax^*)_i}{2\pi}\atan(\sigma|Ax^*|_i/||y^{(i)}||_2),\end{aligned}\]
+\[\begin{aligned} &\PP(z_i + y_i > 0,\ z_i < 0) = \PP(z_i + y_i < 0,\ z_i > 0)\\
+&= \frac{1}{2\pi\sigma||y^{(i)}||_2}\int_0^{\infty}\int_{-\infty}^{-(Ax^*)_iz_i}e^{-z_i^2/2\sigma^2}e^{-y_i^2/2||y^{(i)}||_2^2}\, dy_i\, dz_i\\
+&= \frac{1}{4} - \frac{\sign(Ax^*)_i}{2\pi}\atan(\sigma|Ax^*|_i/||y^{(i)}||_2),\end{aligned}\]
+so
+\[ \EE[\sign(z_i)\sign(\langle z,Ax^*\rangle)] = \frac{2}{\pi}\sign(Ax^*)_i\atan(\sigma|Ax^*|_i/||y^{(i)}||_2),\]
+and hence
+\[\EE\left[\langle P_{\MM}(z), s(z)Ax^*\rangle\right] = \frac{2}{\pi}\sum_{i=1}^m|Ax^*|_i^2\atan(\sigma|Ax^*|_i/||y^{(i)}||_2).\]
+
+Next,
+\[ \EE[\langle P_{\MM}(z), P_A(z)\rangle] = \sum_{i=1}^m|Ax^*|_i\sum_{j=1}^m(AA^{\dagger})_{i,j}\EE[\sign(z_i)z_j] = \sigma\sqrt{\frac{2}{\pi}}\sum_{i=1}^m|Ax^*|_i(AA^{\dagger})_{i,i},\]
+and
+\[\EE\left[\langle P_{\MM}(z),z\rangle\right] = \sum_{i=1}^m|Ax^*|_i\EE[|z_i|] = \sigma\sqrt{\frac{2}{\pi}}\sum_{i=1}^m|Ax^*|_i\]
+and since $\langle z,Ax^*\rangle\sim\mathcal{N}(0, \sigma^2||Ax^*||_2^2)$,
+\[\EE[|\langle z,Ax^*\rangle|] = \sigma||Ax^*||_2\sqrt{\frac{2}{\pi}}.\]
+Finally,
+\[\EE[\langle z, P_A(z)\rangle] = \sigma^2\Tr(AA^{\dagger}) = \sigma^2n,\]
+as $AA^{\dagger}$ is a projection matrix onto an $n$-dimensional subspace $\col(A)$.
+
+Putting everything together,
+\[\begin{aligned}&E=\EE_{z\sim \mathcal{N}(0,\sigma^2I)}\left[\langle -\nabla f(z), s(z)Ax^*-z\rangle\right]\\
+&\quad= \frac{2}{\pi}\sum_{i=1}^m|Ax^*|_i^2\atan(\sigma|Ax^*|_i/||y^{(i)}||_2) - \sigma\sqrt{\frac{2}{\pi}}||Ax^*||_2\\
+&\quad- \sigma\sqrt{\frac{2}{\pi}}\sum_{i=1}^m\Big(2(AA^{\dagger})_{i,i}-1\Big)|Ax^*|_i + \sigma^2n.\end{aligned}\]
+Since $E$ depends only on $|Ax^*|$, it is computable in practice. Since the dominant term in $E$ as $|Ax^*|$ grows is a positive quadratic, we conclude that for large enough $\alpha$, the renormalization $|Ax^*|\mapsto \alpha|Ax^*|$ makes $E>0$.
+
+It is perhaps more meaningful to consider the quantity
+\[E_A = \EE_{z\sim \mathcal{N}(0,\sigma^2I)}\left[\langle -P_A(\nabla f(z)), s(z)Ax^*-P_A(z)\rangle\right],\]
+which measures the inner product between the projections onto $\col(A)$ of the different vectors. In $\col(A)$ there are only two points corresponding to solutions, namely $\pm Ax^*$, whereas in $\RR^m$ any point $\pm Ax^* + w$ with $w\in\col(A)^{\perp}$ corresponds to a solution. In that case
+\[\begin{aligned} E_A &= \EE[\langle P_{\MM}(z), s(z)Ax^*\rangle] - \EE[|\langle z,Ax^*\rangle|] - \EE[\langle P_{\MM}(z), P_A(z)\rangle] + \EE[\langle z,P_A(z)\rangle]\\
+&= \frac{2}{\pi}\sum_{i=1}^m|Ax^*|_i^2\atan(\sigma|Ax^*|_i/||y^{(i)}||_2) - \sigma\sqrt{\frac{2}{\pi}}||Ax^*||_2\\
+&\quad- \sigma\sqrt{\frac{2}{\pi}}\sum_{i=1}^m|Ax^*|_i(AA^{\dagger})_{i,i} + \sigma^2n,\end{aligned}\]
+which satisfies similar properties.
+
+\subsection{Lemma~\ref{lem:stable}}\label{sec:pf_stable}
+Note that
+\[||\nabla f(z)||_2^2 = ||P_{\MM}(z) - P_AP_{\MM}(z)||_2^2 + ||P_A(z) - P_AP_{\MM}(z)||_2^2,\]
+so $||P_{\MM}(z) - P_AP_{\MM}(z)||_2\leq ||\nabla f(z)||_2$ and $||P_A(z) - P_AP_{\MM}(z)||_2\leq ||\nabla f(z)||_2$. Then note that $||P_{\MM}(z) - P_AP_{\MM}(z)||_2$ depends only on the signs of $z$, and hence takes at most $2^m$ values, one of which is zero. Therefore, there exists $\epsilon_1$ such that if $||P_{\MM}(z) - P_AP_{\MM}(z)||_2<\epsilon_1$ then in fact $P_{\MM}(z) = P_AP_{\MM}(z)$ (namely, the second-to-smallest value in its value set) and so $P_{\MM}(z)\in\col(A)\cap\MM$. Taking $\epsilon\leq \epsilon_1$, we then have
+\[ ||P_A(z) - P_AP_{\MM}(z)||_2^2 = ||P_A(z) - P_{\MM}(z)||_2^2 = ||P_A(z) - P_{\MM}\Big(P_A(z) + P_A^c(z)\Big)||_2^2 <\epsilon.\]
+
+For general vectors $x,y\in\RR^m$, note that if $\sign(x_j+y_j)\neq \sign(x_j)$ for any $1\leq j\leq m$, then
+\[ ||x - P_{\MM}(x+y)||_2^2 = \sum_{i=1}^m\Big||x_i|\sign(x_i) - |(Ax^*)_i|\sign(x_i+y_i)\Big|^2 \geq \Big| |x_j| + |(Ax^*)_j|\Big|^2 \geq |(Ax^*)_j|^2,\]
+so $||x-P_{\MM}(x+y)||_2\geq |(Ax^*)_j|$.
+Hence, if we choose $\epsilon<\min(\epsilon_1, |(Ax^*)_1|,\ldots,|(Ax^*)_m|)$ then we must have $\sign(z_i)=\sign(P_A(z)_i + P_A^c(z)_i) = \sign(P_A(z)_i)$ for all $i$ so $P_{\MM}(z) = P_{\MM}P_A(z) = P_AP_{\MM}(z)$.
+
+Let $w = P_A(z) - P_{\MM}(z)$, and note that $||w||_2 < \epsilon$ so $|w_i|< \epsilon$ for all $i$. Let $z^* = P_{\MM}(z) + u + P_A^c(z)$ where $u\in\col(A)^{\perp}$ is a small perturbation. We will show that there exists $u$ with small $||u||_2$ such that $z^*$ corresponds to a solution and is close to $z$. Clearly, $P_A(z^*)=P_{\MM}(z)\in\MM$. We need to show that $P_{\MM}(z^*)=P_{\MM}(z)$, or equivalently, $\sign(P_{\MM}(z)+u+P_A^c(z))=\sign(z-w+u)=\sign(z)$. Here we shall focus on $u$ of the form $u=-\alpha P_A^c(z)$ for small $\alpha\in(0,1)$, so $z^* = P_{\MM}(z) + (1-\alpha)P_A^c(z)$. Let
+\[I = \{i\in\{1,\ldots, m\}:\ \sign(P_A^c(z)_i)\neq \sign(z_i),\ \sign(w_i) = \sign(z_i),\ |P_A^c(z)_i|\geq |(Ax^*)_i|\},\]
+and note that if $i\notin I$ then either:
+\begin{itemize}
+\item $\sign(P_A^c(z)_i)=\sign(z_i)$: in which case $\sign(z^*)=\sign(P_{\MM}(z)_i+(1-\alpha)P_A^c(z)_i)=\sign\left[(|(Ax^*)_i|+(1-\alpha)|P_A^c(z)_i|)\sign(z_i)\right]=\sign(z_i)$,
+\item $\sign(P_A^c(z)_i)=-\sign(z_i)$ and $\sign(w_i) = -\sign(z_i)$: in which case $\sign(z^*)=\sign(z_i-w_i-\alpha P_A^c(z))=\sign\left[(|z_i|+|w_i|-\alpha|P_A^c(z)|)\sign(z_i)\right]=\sign(z_i)$ as $|z_i|\geq |P_A^c(z)_i| > \alpha|P_A^c(z)_i|$,
+\item $|P_A^c(z)_i|<|(Ax^*)_i|$: in which case $\sign(P_{\MM}(z)_i+(1-\alpha)P_A^c(z)_i) = \sign[(|(Ax^*)_i|\pm (1-\alpha)|P_A^c(z)|)\sign(z_i)] = \sign(z_i)$.
+\end{itemize}
+Thus, in either case $\sign(P_{\MM}(z)_i + u_i + P_A^c(z)_i) = \sign(z_i)$.
+
+If $i\in I$, note first that $P_{\MM}P_A(z) = P_{\MM}(z)$ implies $\sign(z_i) = \sign(P_{\MM}(z)_i+w_i+P_A^c(z)_i)$, and for $i\in I$ we get $\sign(z_i) = \sign\left[(|(Ax^*)_i| + |w_i| - |P_A^c(z)_i|)\sign(z_i)\right]$ so $|P_A^c(z)_i|<|(Ax^*)_i| + |w_i|< |(Ax^*)_i| + \epsilon$, and hence
+\[|(Ax^*)_i|\leq |P_A^c(z)_i|<|(Ax^*)_i| + \epsilon,\quad \forall i\in I.\]
+
+Letting $d = \min_i|(Ax^*)_i| > 0$ and $\alpha = \epsilon/d<1$ so $z^* = P_{\MM}(z) + (1-\frac{\epsilon}{d})P_A^c(z)$, note that if $i\in I$ then
+\[\sign\left[P_{\MM}(z) + (1-\frac{\epsilon}{d})P_A^c(z)\right] = \sign\left[(|(Ax^*)_i|-(1-\epsilon/d)|P_A^c(z)_i|)\sign(z_i)\right] = \sign(z_i)\]
+as $|(Ax^*)_i|-|P_A^c(z)_i|+\epsilon(|P_A^c(z)_i|/d)>\epsilon\left(|P_A^c(z)_i/d - 1\right) \geq 0$. If $i\notin I$, then a similar result was shown above. Hence $P_{\MM}(z^*)=P_{\MM}(z) = P_A(z^*)$ so $z^*$ corresponds to a solution, and
+\[||z-z^*||_2 \leq ||w||_2 + \frac{\epsilon}{d}||P_A^c(z)||_2 < \epsilon + \frac{\epsilon}{d}||P_A^c(z)||_2.\]
+
+If $\min_i|z_i|\geq\epsilon$, we must have $I=\emptyset$, as if $i\in I$ then $|z_i| = |P_{\MM}(z)_i+w_i+P_A^c(z)_i|=|(Ax^*)_i| + |w_i| - |P_A^c(z)_i|\leq |w_i|<\epsilon$, a contradiction. In that case we may set $\alpha=0$ in the above and conclude that $z^* = P_{\MM}(z) + P_A^c(z)$ corresponds to a solution and $||z-z^*||_2 = ||w||_2<\epsilon$. 
+
+
+\end{document} 
