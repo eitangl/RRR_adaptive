@@ -6,3 +6,8 @@
 *.asv
 profile_results/*
 .dropbox.attr
+*.aux
+*.bbl
+*.gz
+*.blg
+
