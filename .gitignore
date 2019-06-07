@@ -11,3 +11,5 @@ profile_results/*
 *.gz
 *.blg
 
+RRR_paper.pdf
+RRR_paper.log
