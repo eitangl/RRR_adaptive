@@ -156,31 +156,33 @@ phase retrieval, Douglas-Rachford, sub-gradient descent
 	
 \section{Introduction}
 
-We consider the problem of recovering a signal from its Fourier magnitudes, called phase retrieval. 
-This problem is plays a key role in a variety of applications, in particular in optics~\cite{walther1963question,shechtman2015phase,trebino2012frequency,fienup1987phase} and signal processing~\cite{Bendory2017,baykal2004blind,lawrence2008fundamentals,bendory2017bispectrum}. \TODO{We should re-write this paragraph. One possibility is to start by describing crystallography, and then say that phase retrieval has some other applications.}
+\tb{Phase retrieval }
 
-\TODO{Next paragraph: In recent, many papers considered the computional aspects of the problems. However, almost all of them were focused on toy models, that their connection to actual phase retrieval problems was never established. In this literature, the state-of-the-art algorithms are based on minimizing non-convex loss function using a gradient algorithm; see for instance~\cite{candes2015phase,chen2017solving,wang2017solving}. }
-%While almost all multidimensional signals are uniquely determined from their oversampled Fourier transform [Beinert], existing algorithms for recovery are poorly understood. 
-In practice however, many heuristic algorithms exist that are use in the crystallography community, including HIO, RRR, and RAAR. \TODO{We need to provide citations, and explain the acronyms. In addition, we should be clear that the gradient algorithms are NOT used for difficult problems such as crystallography.} These algorithm enjoy good empirical performance, recovering the correct solution every time, but no theoretical guarantees are known for them \TODO{It is worst than that: their dynamics is completely unclear and was not really analyzed.}. For certain choices of their parameters, all three of the above algorithms coincide with with the Douglas-Rachford algorithm, although the theoretical guarantees associated with Douglas-Rachford do not apply to this problem because of its non-convexity. \TODO{This is currently unclear: ``As will be shown, all the three are special cases of the DR framework. However, the analysis of DR is limited to convex sets...''; we should make it clear that PR is basically a problem of finding the intersection of two sets (in the absence of noise), otherwise it will not be clear what do we it has to do with convex/non-convex sets.}
 
-In this paper, we focus \tb{on the Relaxed-Reflect-Reflect (RRR) [Elser] as a prototype of the heuristic algorithms. 
-In particular, we show TKTK.}	
+Phase retrieval is the problem of recovering a signal from its Fourier magnitudes. This problem is plays a key role in a variety of applications, in particular in optics~\cite{walther1963question,shechtman2015phase,trebino2012frequency,fienup1987phase} and signal processing~\cite{Bendory2017,baykal2004blind,lawrence2008fundamentals,bendory2017bispectrum}.
 
-%We formulate the algorithm as subgradient descent in a specific setting, and use backtracking line search to adaptively choose the step size, which coincides with the free 'relaxation' parameter introduced in [Elser]. Numerical experiments show that our algorithm can significantly reduce the iteration complexity and time for recovery. Furthermore, while it was previously reported that RRR has an exponential distribution of running time, our algorithm does not.
 
-%Because of the difficulty of the Fourier phase retrieval problem, a simplified version has been extensively studied in the optimization literature, often referred to as generalized phase retrieval. In this setting, the Fourier matrix is replaced by a random Gaussian matrix. Several algorithms have been proposed for this problem that enjoy global convergence guarantees. Unfortunately, these algorithms are unable to retrieve Fourier phases. We apply our algorithm to the generalized phase retrieval problems as well and demonstrate a consistent advantage.
+While almost all multidimensional signals are uniquely determined from their oversampled Fourier transform [Beinert], existing algorithms for recovery are poorly understood. In practice however, many heuristic algorithms exist that are use in the crystallography community, including HIO, RRR, and RAAR. These enjoy good empirical performance, recovering the correct solution every time, but no theoretical guarantees are known for them. For certain choices of their parameters, all three of the above algorithms coincide with with the Douglas-Rachford algorithm, although the theoretical guarantees associated with Douglas-Rachford do not apply to this problem because of its non-convexity. 
 
-\section{Problem Statement and algorithms}
+In this paper, we focus on a particular heuristic algorithm called Relaxed-Reflect-Reflect (RRR) [Elser]. We formulate the algorithm as subgradient descent in a specific setting, and use backtracking line search to adaptively choose the step size, which coincides with the free 'relaxation' parameter introduced in [Elser]. Numerical experiments show that our algorithm can significantly reduce the iteration complexity and time for recovery. Furthermore, while it was previously reported that RRR has an exponential distribution of running time, our algorithm does not.
 
+Because of the difficulty of the Fourier phase retrieval problem, a simplified version has been extensively studied in the optimization literature, often referred to as generalized phase retrieval. In this setting, the Fourier matrix is replaced by a random Gaussian matrix. Several algorithms have been proposed for this problem that enjoy global convergence guarantees. Unfortunately, these algorithms are unable to retrieve Fourier phases. We apply our algorithm to the generalized phase retrieval problems as well and demonstrate a consistent advantage.
+
+\TODO{Things I think it worth mentioning in the manuscript:
+	- explain the DR framework
+	- how it fits phase retrieval
+	- relation to ADMM (it is more well known in the community)
+	- relation with alternating projection 
+	- we can also include the different ways to derive the GS algorithm.}
+
+\section{Problem Statement and Previous Algorithms}
 We formulate phase retrieval as a feasibility problem: Given a sensing matrix $A\in\CC^{m\times n}$ and magnitudes $b\in\RR^{m}_{\geq 0}$, we require a point $x\in\MM\cap \col(A)$ where $\MM=\{x\in\CC^n:\ |x|=b\}$ and $|x|$ denotes entry-wise absolute value. The sensing matrix is usually taken to be either i.i.d. Gaussian or an oversampled DFT matrix \cite{Bendory2017}, the latter being especially relevant for applications in optics and crystallography \cite{Elser2017, Luke2005}. The intersection $\MM\cap\col(A)$ is never singleton, since if $z^*\in\col(A)\cap\MM$ then $e^{i\theta}z^*\in\col(A)\cap \MM$ for any global phase $\theta$. It has been shown however that $\col(A)\cap\MM$ is singleton modulo global phase in various settings \cite{Bandeira2014,Bendory2017,Conca2015}. \TODO{Expand on this?}
-
-\TODO{After presenting the problem, I think this section should include three sub-section, one for each approach: optimization (minimizing an objective), alternating projection, and the Douglas-Rachford. The latter should introduce DR in its generality (some details may be located in an appendix) and then particularize it to PR. We also need to say what it known theoretically about DR and relate it to ADMM.}
 
 The naive approach to this problem, called Grechberg-Saxton (GS) or Error Reduction (ER) in the literature, consists of alternate projection between the two constraint set until convergence. Specifically, we introduce the projectors 
 \begin{equation}\label{eq:projections}
     P_A(x) = AA^{\dagger}x, \quad P_{\MM}(x)=b\odot \phase(x),
 \end{equation}
-where $P_A$ projects onto $\col(A)$, $P_{\MM}$ projections onto $\MM$ and $\phase(x)_i=\frac{x_i}{|x_i|}$ \TODO{Notation should be explained...}. Then, GS performs the iteration 
+where $P_A$ projects onto $\col(A)$, $P_{\MM}$ projections onto $\MM$ and $\phase(x)_i=\frac{x_i}{|x_i|}$. Then, GS performs the iteration 
 \begin{equation}\label{eq:GS}
     x\mapsto P_AP_{\MM}(x),    
 \end{equation}
@@ -243,7 +245,7 @@ In addition to the above algorithms that are based on relaxing Douglas-Rachford,
 %
 %We present experiments on both the artificial real-valued random phase-retrieval problem and the more applicable but difficult Fourier phase retrieval. We compare our adaptive RRR scheme both with RRR with constant step size, with HIO, and with RAAR. For the random phase-retrieval problem, we also compare our scheme with the gradient-descent based Wirtinger Flow and Truncated Wirtinger Flow algorithms, as well as the SDP-based PhaseLift.
 
-\section{Analysis}
+\section{Basic analysis}
 
 We show several basic results about $f(z)$ (because of space limitations, all proofs are given in the appendix).
 
@@ -437,9 +439,6 @@ as
 \[||z-z^*||_2 \leq ||w||_2 + \frac{\epsilon}{d}||P_A^c(z)||_2 < \epsilon + \frac{\epsilon}{d}||P_A^c(z)||_2.\]
 
 If $\min_i|z_i|\geq\epsilon$, we must have $I=\emptyset$, as if $i\in I$ then $|z_i| = |P_{\MM}(z)_i+w_i+P_A^c(z)_i|=|(Ax^*)_i| + |w_i| - |P_A^c(z)_i|\leq |w_i|<\epsilon$, a contradiction. In that case we may set $\alpha=0$ in the above and conclude that $z^* = P_{\MM}(z) + P_A^c(z)$ corresponds to a solution and $||z-z^*||_2 = ||w||_2<\epsilon$. 
-
-
-\tb{\section{Discussion}}
 
 
 \bibliographystyle{abbrv}
