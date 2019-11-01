@@ -1,39 +1,64 @@
-%\documentclass[journal]{IEEEtran}
-%\documentclass[journal, onecolumn]{IEEEtran}
-\documentclass[12pt]{article}
+\documentclass[journal]{IEEEtran}
+%\documentclass[12pt]{article}
 
+%\usepackage{tensor} %prescript
 \usepackage{amsmath} %lots of math symbols
 \usepackage{amsfonts} %\mathbb
 \usepackage{microtype} %improves font to make it easier to read
 \usepackage{hyperref} %clickable links
+%\usepackage[capitalize]{cleveref} %cref
 \usepackage{amsthm} %proof environment
 \usepackage[shortlabels]{enumitem} %resume enumerate
 \usepackage{amssymb} %\subsetneq(q)
 \usepackage{comment}
+%\usepackage{mathrsfs}
+%\usepackage{gensymb}
+%\usepackage{bbm} %mathbbm
+\usepackage{algorithm,algpseudocode} %for algorithms
 \usepackage{tikz} % node
 \usepackage{subfigure}
 %\usepackage{titlesec} % titleformat
 \usepackage{authblk}
 
+\algrenewcomment[1]{\quad\(\triangleright\) #1}
+\algnewcommand\algorithmicinput{\textbf{Input:}}
+\algnewcommand\INPUT{\item[\algorithmicinput]}
+\algnewcommand\algorithmicoutput{\textbf{Output:}}
+\algnewcommand\OUTPUT{\item[\algorithmicoutput]}
+\algnewcommand{\LineComment}[1]{\State \(\triangleright\) #1}
+%
+%\titleformat*{\section}{\large\bfseries}
+%\titleformat*{\subsection}{\normalsize\bfseries}
+%\titlespacing*{\section}
+%{0pt}{1ex}{1ex}
+%\titlespacing*{\subsection}
+%{0pt}{1ex}{1ex}
+
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}{Lemma}
 \newtheorem{corollary}{Corollary}
+
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
+
 \theoremstyle{remark}
 \newtheorem{remark}{Remark}
+
 \theoremstyle{definition}
 \newtheorem{exer}{Ex.}
+
 \theoremstyle{problem}
 \newtheorem{problem}{Problem}
+
 \theoremstyle{definition}
 \newtheorem{probl}{Problem}
 \newenvironment{customprb}[1]
   {\renewcommand\theprobl{#1}\probl}
   {\endprobl}
 \newtheorem{prob}{Problem}
+
 \newtheorem{proposition}{Proposition}
-%\setenumerate[1]{label={(\roman*)}}
+\setenumerate[1]{label={(\roman*)}}
 
 \newcommand{\be}{\begin{equation}}
 \newcommand{\ee}{\end{equation}}
@@ -66,6 +91,11 @@
 \newcommand{\clo}{\text{clo}}
 \newcommand{\Tr}{\text{Tr}}
 \newcommand{\sgn}{\text{sign}}
+\newcommand{\conj}[1]{\overline{#1}}
+\newcommand{\aut}{\text{aut}}
+\newcommand{\orb}{\text{orbit}}
+\newcommand{\stab}{\text{Stab}}
+\newcommand{\defeq}{\mathrel{\overset{\makebox[0pt]{\mbox{\normalfont\tiny\sffamily def}}}{=}}}
 \newcommand{\Gal}{\text{Gal}}
 \newcommand{\lcm}{\text{lcm}}
 \newcommand{\id}{\text{id}}
@@ -75,6 +105,9 @@
 \newcommand{\phase}{\text{phase}}
 \newcommand{\atan}{\tan^{-1}}
 
+\renewcommand{\baselinestretch}{1.1} %-------------------That's the stretching command!--------------------------
+%\overfullrule=5pt %------------------------------------This highlights overfull boxes!-------------------------
+
 \newcommand{\RR}{\mathbb{R} }
 \newcommand{\ZZ}{\mathbb{Z} }
 \newcommand{\QQ}{\mathbb{Q} }
@@ -82,8 +115,6 @@
 \newcommand{\II}{\mathcal{I} }
 \newcommand{\CC}{\mathbb{C}}
 \newcommand{\MM}{\mathcal{M}}
-\newcommand{\A}{\mathcal{A}}
-\newcommand{\B}{\mathcal{B}}
 \newcommand{\FF}{\mathbb{F}}
 \newcommand{\rsum}{\sideset{}{'}\sum}
 \newcommand{\ch}{\text{ch}}
@@ -96,9 +127,7 @@
 \newcommand{\TODO}[1]{{\color{red}{[#1]}}}
 \newcommand{\tb}[1]{{\color{blue}TB: {[#1]}}}
 
-\usepackage{geometry}
-\geometry{margin=2cm}
-
+%\title{Adaptive learning rate for phase retrieval algorithms}
 
 
 
@@ -108,11 +137,11 @@
 
 \title{A note on Douglas-Rachford, gradient descent, and phase retrieval}
 
-\author[1]{Eitan Levin}
-\author[1]{Tamir Bendory}
-
-\affil[1]{The Program in Applied and Computational  Mathematics, Princeton University, Princeton, NJ, USA}
-\affil[2]{School of Electrical Engineering, Tel Aviv University, Tel Aviv, Israel}
+\author{Eitan Levin and Tamir Bendory}
+\affil{The Program in Applied and Computational  Mathematics, Princeton University, Princeton, NJ, 08540 USA}
+%\affil[2]{Department of Mathematics, Princeton University, Princeton, NJ, 08540 USA}
+% <-this % stops a space
+% make the title area
 \maketitle
 
 \begin{abstract}
@@ -121,68 +150,22 @@ The objective function is (we want to stress it is a surprising one.)
 On the contrary, we show that in other cases,  Douglas-Rachford is not a sub-gradient algorithm of any objective function. Finally, we provide some basic analysis of the Douglas-Rachford algorithms for phase retrieval.}
 \end{abstract}
 
-%\begin{IEEEkeywords}
-%phase retrieval, Douglas-Rachford, sub-gradient descent 	
-%\end{IEEEkeywords}
+\begin{IEEEkeywords}
+phase retrieval, Douglas-Rachford, sub-gradient descent 	
+\end{IEEEkeywords}
 	
 \section{Introduction}
 
-<<<<<<< HEAD
-We consider the problem of recovering a signal from its Fourier magnitude, called phase retrieval. 
-This problem is plays a key role in a variety of applications, in particular in optics~\cite{walther1963question,shechtman2015phase,trebino2012frequency,fienup1987phase} and signal processing~\cite{Bendory2017,baykal2004blind,lawrence2008fundamentals,bendory2017bispectrum}. 
-A particularly important problem, which serves as the main motivation for this paper, is X-ray crystallography---a technology to constitute the atomic structure of molecules. 
-
-In the last decade, the computational and theoretical aspects of the phase retrieval problem gained much attention. 
-As a starting point, most papers considered a toy model in which the Fourier measurements are replaced by inner products with random vectors; hereafter we refer to the toy model as the \emph{random phase retrieval problem}.
-The random phase retrieval  problem has been proved to be  considerably easier and its importance to practical applications is dubious. 
-
-The the state-of-the-art algorithms for the random phase retrieval problem are based on minimizing non-convex loss functions using first-order gradient algorithm; see for instance~\cite{candes2015phase,chen2017solving,wang2017solving}.
-Remarkably, the line of papers derive strong theoretical guarantees by showing that the intrinsic non-convexity of the problem is usually benign. 
-In practice, however, the situation is radically different; for almost all phase retrieval applications, the solutions proposed for the random phase retrieval setup simply do not work---namely, the non-convexity is not benign and gradient-based algorithms are trapped in local minima, far from the global solution.
-Instead, many heuristic algorithms exist that are use in the crystallography community, including the hybrid input-output (HIO)~\cite{Fienup1982}, difference map~\cite{elser2003phase}, Relaxed averaged alternating reflections (RAAR)~\cite{Luke2005}, and relax-reflect-reflect (RRR)~\cite{Elser2017a}.  In this work, we focus in particular in the RRR algorithm as a representative example of these algorithm; we do not claim it outperforms its competitors, but use it because of its simple iterations. These algorithm enjoy good empirical performance, recovering the correct solution every time, but no theoretical guarantees are known for them. 
-It is not only that their convergence is unclear, but their dynamics as well. \TODO{Now we need to provide an example.}
-
-\TODO{About DR: ~\cite{phan2016linear,hesse2013nonconvex,lindstrom2018survey}}
-For certain choices of their parameters 
-all  the above algorithms coincide with with the Douglas-Rachford algorithm, although the theoretical guarantees associated with Douglas-Rachford do not apply to this problem because of its non-convexity. This subject will be discussed in detail in the next section.
-The main goal of this paper is to unveil  the relation between those heuristic algorithms and the gradient-based algorithms which are very popular these days. In particular, we show that XXX
- 
- \TODO{This is currently unclear: ``As will be shown, all the three are special cases of the DR framework. However, the analysis of DR is limited to convex sets...''; we should make it clear that PR is basically a problem of finding the intersection of two sets (in the absence of noise), otherwise it will not be clear what do we it has to do with convex/non-convex sets.}
-
-\TODO{Need to outline the paper}
-=======
 \tb{Phase retrieval }
 
 
 Phase retrieval is the problem of recovering a signal from its Fourier magnitudes. This problem is plays a key role in a variety of applications, in particular in optics~\cite{walther1963question,shechtman2015phase,trebino2012frequency,fienup1987phase} and signal processing~\cite{Bendory2017,baykal2004blind,lawrence2008fundamentals,bendory2017bispectrum}.
->>>>>>> Tamir
 
 
 While almost all multidimensional signals are uniquely determined from their oversampled Fourier transform [Beinert], existing algorithms for recovery are poorly understood. In practice however, many heuristic algorithms exist that are use in the crystallography community, including HIO, RRR, and RAAR. These enjoy good empirical performance, recovering the correct solution every time, but no theoretical guarantees are known for them. For certain choices of their parameters, all three of the above algorithms coincide with with the Douglas-Rachford algorithm, although the theoretical guarantees associated with Douglas-Rachford do not apply to this problem because of its non-convexity. 
 
 In this paper, we focus on a particular heuristic algorithm called Relaxed-Reflect-Reflect (RRR) [Elser]. We formulate the algorithm as subgradient descent in a specific setting, and use backtracking line search to adaptively choose the step size, which coincides with the free 'relaxation' parameter introduced in [Elser]. Numerical experiments show that our algorithm can significantly reduce the iteration complexity and time for recovery. Furthermore, while it was previously reported that RRR has an exponential distribution of running time, our algorithm does not.
 
-<<<<<<< HEAD
-\subsection{The phase retrieval problem}
-
-We formulate phase retrieval as a feasibility problem: Given a sensing matrix $A\in\CC^{m\times n}$ and magnitudes $b\in\RR^{m}_{\geq 0}$ (the measurements), we seek for a point in 
-$x\in\A\cap \B $ where $\A=\{z\in\CC^n:\ |Az|=b\}$, and $\B$ denotes another set that describes a prior knowledge on the problem. 
-For instance, for the random phase retrieval problem, the sensing matrix is usually taken to be  i.i.d. Gaussian with $m\geq 2n$ and the set $\B$ describes the the column space of the matrix $A$~\cite{candes2015phase}. 
-The intersection $\A\cap\B$ is never singleton, since if $z^*\in\A\cap\B$ then $e^{i\theta}z^*$ for any global phase $\theta$. It was shown that under rather mild condition, the intersection is singleton up to the ambiguities; see for instance~\cite{balan2006signal, Bandeira2014,Conca2015}. 
-In crystallography, the signal represents the atomic structures of the underlying molecule. In that case, the signal is sparse, and its non-zero values represent the atoms. Thus, the set $\B$ describes the expected sparsity level of the image. 
-The solution here is defined up to three intrinsic ambiguities: multiplication by complex exponential, shift, and reflection through the origin.   
-
-We mention that the phase retrieval arises in a variety of different applications, and thus formulation varies as well. For instance, for the ptychography problem, the matrix $A$ can be approximated as a short-time Fourier transform~\cite{bendory2017non,iwen2018phase}. Another interesting application is the ultra-short laser pulse characterization using frequency-resolved optical gating that result in either quartic bi-quadratic systems of equations~\cite{trebino2012frequency,bendory2018signal,bendory2019blind}.
-
-\subsection{Gradient-based algorithms}
-First-order gradient algorithms became popular in recent years to analyze the random phase retrieval problem. The underling idea is very simple: rather than imposing the constraints explicitly, replacing them with a penalty the promote the desired solution.  For the random phase retrieval, a typical penalty is of the form
-\begin{equation} \label{eq:ls}
-\min_z \| |b| - |Az|\|^2.
-\end{equation}
-The standard approach is then to compute the gradient of~\eqref{eq:ls} and invoke a gradient algorithm. Many different variations of this idea have been proposed and analyzed in recent years. In more involved models, another constraint can be added to~\eqref{eq:ls}. Perhaps, surprisingly, it was proven that this approach works well for the random setup, and converges rate were derived. 
-
-\subsection{Alternating projection algorithms}
-=======
 Because of the difficulty of the Fourier phase retrieval problem, a simplified version has been extensively studied in the optimization literature, often referred to as generalized phase retrieval. In this setting, the Fourier matrix is replaced by a random Gaussian matrix. Several algorithms have been proposed for this problem that enjoy global convergence guarantees. Unfortunately, these algorithms are unable to retrieve Fourier phases. We apply our algorithm to the generalized phase retrieval problems as well and demonstrate a consistent advantage.
 
 \TODO{Things I think it worth mentioning in the manuscript:
@@ -194,21 +177,8 @@ Because of the difficulty of the Fourier phase retrieval problem, a simplified v
 
 \section{Problem Statement and Previous Algorithms}
 We formulate phase retrieval as a feasibility problem: Given a sensing matrix $A\in\CC^{m\times n}$ and magnitudes $b\in\RR^{m}_{\geq 0}$, we require a point $x\in\MM\cap \col(A)$ where $\MM=\{x\in\CC^n:\ |x|=b\}$ and $|x|$ denotes entry-wise absolute value. The sensing matrix is usually taken to be either i.i.d. Gaussian or an oversampled DFT matrix \cite{Bendory2017}, the latter being especially relevant for applications in optics and crystallography \cite{Elser2017, Luke2005}. The intersection $\MM\cap\col(A)$ is never singleton, since if $z^*\in\col(A)\cap\MM$ then $e^{i\theta}z^*\in\col(A)\cap \MM$ for any global phase $\theta$. It has been shown however that $\col(A)\cap\MM$ is singleton modulo global phase in various settings \cite{Bandeira2014,Bendory2017,Conca2015}. \TODO{Expand on this?}
->>>>>>> Tamir
 
-The naive approach to this problem, called Grechberg-Saxton (GS) or Error Reduction (ER) in the literature, consists of alternate projection between the two constraint set until convergence. 
-Then, GS performs the iteration 
-\begin{equation}\label{eq:GS}
-x\mapsto P_\A P_{\B}(x),    
-\end{equation}
-where the $P_\mathcal{Z}$ denotes the projectors onto the set $\mathcal{Z}$.
-In the phase retrieval problem,  $\A$ is the set of all signals with the measured Fourier magnitudes. Thus, the projector $P_\A z=b\odot \phase(z)$, where $\odot$ denotes the point-wise product, and 
-\begin{equation*}
-\phase(z):=\frac{z}{|z|}, \qquad z\neq 0,
-\end{equation*}
-and $\phase(0)=1$. 
-
-Specifically, we introduce the projectors 
+The naive approach to this problem, called Grechberg-Saxton (GS) or Error Reduction (ER) in the literature, consists of alternate projection between the two constraint set until convergence. Specifically, we introduce the projectors 
 \begin{equation}\label{eq:projections}
     P_A(x) = AA^{\dagger}x, \quad P_{\MM}(x)=b\odot \phase(x),
 \end{equation}
@@ -217,8 +187,6 @@ where $P_A$ projects onto $\col(A)$, $P_{\MM}$ projections onto $\MM$ and $\phas
     x\mapsto P_AP_{\MM}(x),    
 \end{equation}
 which are unfortunately known to quickly converge to suboptimal local minima, and in practice only used to refine a solution \cite{Elser2017, Marchesini2007}. 
-
-We also need to say what it known theoretically about DR and relate it to ADMM.
 
 Instead, many algorithms used in practice are based on relaxing the Douglas-Rachford algorithm applied to the sum of characteristic functions $F(x) = \II_{A}(x)+\II_{\MM}(x)$. Specifically, Douglas-Rachford for $F(x)$ iterates \begin{equation}\label{eq:Doug_Rach}
     x\mapsto \frac{1}{2}(I+R_AR_{\MM})(x) = x + 2P_AP_{\MM}(x) - P_A(x) - P_{\MM}(x) = P_AP_{\MM}(x) + P_A^cP_{\MM}^c(x),
